@@ -1,4 +1,4 @@
-from typing import Dict, TypeVar
+from typing import Dict, TypeVar, List
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -56,3 +56,17 @@ def encode_columns(df: DataFrame, encoders: Dict[str, LabelEncoder]) -> DataFram
             encoded_df[column] = encoders[column].fit_transform(encoded_df[column].astype("str"))
 
     return encoded_df
+
+
+def get_encoder_mapping(encoder_name: str, encoders: Dict[str, LabelEncoder]) -> DataFrame:
+
+    encoder: LabelEncoder = encoders[encoder_name]
+
+    labels: List[str] = sorted(list(encoder.classes_))
+    mapping: List[int] = encoder.transform(labels)
+
+    encoder_mapping_df: DataFrame = pd.DataFrame()
+    encoder_mapping_df[f"{encoder_name}_label"] = pd.Series(labels)
+    encoder_mapping_df[f"{encoder_name}_encoded_value"] = pd.Series(mapping)
+
+    return encoder_mapping_df

@@ -11,6 +11,7 @@ from data_modelling.utils import (
     create_column_encoders,
     encode_columns,
     read_xl_data_into_dataframe,
+    get_encoder_mapping,
 )
 
 from data_modelling.decision_tree import (
@@ -197,7 +198,18 @@ def main():
                 )
                 st.pyplot(decision_tree_figure)
 
-            if st.checkbox(label="Evaluate Training Metrics"):
+                # Let user view the encoder mappings
+                encoder: str = st.selectbox(
+                    label="Select encoded feature to view mapping between original label and encoded value",
+                    options=(encoders.keys()),
+                    key="encoder_mapping_option",
+                )
+
+                if encoder:
+                    encoder_mapping_df: DataFrame = get_encoder_mapping(encoder, encoders)
+                    st.dataframe(encoder_mapping_df.astype(str))
+
+            if st.checkbox(label="Evaluate Training Metrics", key="evaluate_training_metrics"):
                 confusion_matrix_fig, evaluation_metrics = evaluate_decision_tree(
                     classifier=classifier,
                     input_df=train_df,
@@ -212,7 +224,7 @@ def main():
 
                 st.pyplot(confusion_matrix_fig)
 
-            if bool(st.session_state["create_decision_tree"]):
+            if bool(st.session_state["evaluate_training_metrics"]):
                 testing_sheet: str = st.selectbox(
                     label="Choose the sheet to use for testing",
                     options=(st.session_state["excel_sheet_names"]),
