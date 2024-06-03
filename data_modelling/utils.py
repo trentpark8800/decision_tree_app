@@ -2,11 +2,8 @@ from typing import Dict, TypeVar, List
 
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
+from pandas.core.frame import DataFrame
 from sklearn.preprocessing import LabelEncoder
-
-DataFrame = TypeVar("pandas.core.DataFrame")
-Series = TypeVar("pandas.core.Series")
-Figure = TypeVar("matplotlib.pyplot.figure")
 
 
 def read_xl_data_into_dataframe(data, sheet_name: str) -> DataFrame:

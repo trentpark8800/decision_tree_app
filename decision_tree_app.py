@@ -2,10 +2,12 @@ from typing import List, TypeVar, Dict
 from io import BytesIO
 
 import streamlit as st
+from pandas.core.frame import DataFrame
+from matplotlib.figure import Figure
 
 from openpyxl import load_workbook
 
-from data_management.storage import BlobStorageManager
+from data_management.storage import S3StorageManager
 
 from data_modelling.utils import (
     create_column_encoders,
@@ -20,24 +22,20 @@ from data_modelling.decision_tree import (
     create_decision_tree,
 )
 
-DataFrame = TypeVar("pandas.core.DataFrame")
-Figure = TypeVar("matplotlib.pyplot.figure")
-UploadedFile = TypeVar("streamlit.uploaded_file_manager.UploadedFile")
-
 
 def file_change():
     st.session_state["file_change"] = True
     st.session_state["data_change"] = True
 
 
-def store_uploaded_data_in_blob(data: UploadedFile) -> str:
+def store_uploaded_data_in_blob(data: st.file_uploader) -> str:
     """_summary_
 
     Returns:
         [BlobStorageManager, str]: _description_
     """
-    storage_manager: BlobStorageManager = st.session_state["storage_manager"]
-    blob_name: str = storage_manager.upload_data_to_blob_container(data)
+    storage_manager: S3StorageManager = st.session_state["storage_manager"]
+    blob_name: str = storage_manager.upload_data_to_s3(data)
     st.session_state["file_change"] = False
     return blob_name
 
@@ -45,7 +43,7 @@ def store_uploaded_data_in_blob(data: UploadedFile) -> str:
 def get_excel_sheet_names() -> List[str]:
     """ """
     file_like_object: BytesIO = BytesIO(
-        st.session_state["storage_manager"].retrieve_file_from_blob_container(
+        st.session_state["storage_manager"].retrieve_file_from_s3(
             st.session_state["blob_file_name"]
         )
     )
@@ -60,7 +58,7 @@ def get_excel_sheet_names() -> List[str]:
 
 def load_blob_data_into_dataframe(sheet_name: str) -> DataFrame:
     df = read_xl_data_into_dataframe(
-        st.session_state["storage_manager"].retrieve_file_from_blob_container(
+        st.session_state["storage_manager"].retrieve_file_from_s3(
             st.session_state["blob_file_name"]
         ),
         sheet_name=sheet_name,
@@ -76,7 +74,7 @@ def main():
     Entry point for the script.
     """
     if "storage_manager" not in st.session_state:
-        st.session_state["storage_manager"] = BlobStorageManager()
+        st.session_state["storage_manager"] = S3StorageManager()
 
     if "file_change" not in st.session_state:
         st.session_state["file_change"] = False
@@ -106,7 +104,7 @@ def main():
     # TODO: Remove this test code
     # st.write(st.session_state)
 
-    data: UploadedFile = st.file_uploader(
+    data: st.file_uploader = st.file_uploader(
         label="Drop your .xlsx file here", key="data_upload", on_change=file_change
     )
 
